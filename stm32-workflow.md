@@ -4,7 +4,7 @@
 
 A clean, reproducible, professional workflow for STM32 (Cortex‑M4) development on NixOS using CMake.
 
-This guide documents:
+This document contains:
 
 * Common errors encountered
 * Root causes
@@ -14,11 +14,27 @@ This guide documents:
 
 ---
 
+# 1. Project Structure
+
+```bash
+project/
+├── flake.nix
+├── flake.lock
+├── CMakeLists.txt
+├── cmake/
+│   └── gcc-arm-none-eabi.cmake
+├── Src/
+├── Inc/
+├── Drivers/
+└── build/ 
+└── build.sh
+```
+
 # 1. Architecture Overview
 
 We separate the system into TWO clear layers:
 
-## 1️⃣ Development Environment (stm32-develop)
+## 1.1 Development Environment (stm32-develop)
 
 Controls the toolchain and build tools.
 
@@ -32,17 +48,21 @@ Provides:
 * cmake
 * ninja
 * gdb
-* openocd (optional)
+* openocd
 
 Usage:
+
+As we need flake for every project I made a template for it and just have to copy it to the project and use it.
+
+In project dir run:
+
+```bash
+cp -r ~/Template/stm32-develop/flake.nix ~/Workspace/< project name >
+``` 
 
 ```bash
 nix develop
 ```
-As we need flake for every project I made a template for it and just have to copy it to the project and use it.
-```bash
-cp -r ~/Template/stm32-develop ~/Workspace/< project name >
-``` 
 
 Purpose:
 
@@ -56,7 +76,7 @@ It only provides the environment.
 
 ---
 
-## 2️⃣ Build System (stm32-build)
+## 2.2 Build System (stm32-build)
 
 Controls compilation and linking.
 
@@ -212,20 +232,7 @@ Multiple projects do NOT duplicate them.
 
 ---
 
-# 6. Recommended Project Structure
 
-```bash
-project/
-├── flake.nix
-├── flake.lock
-├── CMakeLists.txt
-├── cmake/
-│   └── gcc-arm-none-eabi.cmake
-├── Src/
-├── Inc/
-├── Drivers/
-└── build/ (generated)
-```
 
 Workflow:
 
@@ -245,4 +252,3 @@ You now have:
 * No global system dependency pollution
 * Template-ready STM32 infrastructure
 
-This is a clean, professional embedded development setup.
