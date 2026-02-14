@@ -165,53 +165,29 @@ cmake --build .
 
 # 4. Common Errors and Fixes
 
-## Error: Bad CMake executable "cube-cmake"
+1. Error: Bad CMake executable "cube-cmake"
+    Cause: VSCode overriding CMake path.
+    Fix: Remove custom `cmake.cmakePath` in settings.
 
-Cause: VSCode overriding CMake path.
-Fix: Remove custom `cmake.cmakePath` in settings.
+2. Error: arm-none-eabi-gcc not found
+    Cause: Not inside `nix develop` shell.
+    Fix: Run `nix develop`.
 
----
+3. Error: "isb 0xF" not supported
+    Cause: Missing `-mthumb` flag.
+    Fix: Ensure `-mthumb` is always present.
 
-## Error: arm-none-eabi-gcc not found
+4. Error: VFP register argument mismatch
+    Cause: Mixing `-mfloat-abi=hard` and `softfp`.
+    Fix: Use only ONE ABI everywhere.
 
-Cause: Not inside `nix develop` shell.
-Fix: Run `nix develop`.
+5. Error: cannot find -lg_nano
+    Cause: Using `--specs=nano.specs` without nano library.
+    Fix: Remove nano specs OR ensure toolchain supports it.
 
----
-
-## Error: "isb 0xF" not supported
-
-Cause: Missing `-mthumb` flag.
-Fix: Ensure `-mthumb` is always present.
-
----
-
-## Error: VFP register argument mismatch
-
-Cause: Mixing `-mfloat-abi=hard` and `softfp`.
-Fix: Use only ONE ABI everywhere.
-
----
-
-## Error: cannot find -lg_nano
-
-Cause: Using `--specs=nano.specs` without nano library.
-Fix: Remove nano specs OR ensure toolchain supports it.
-
----
-
-## Error: "no input files" during compiler test
-
-Cause: Flags defined as list instead of string.
-Fix: Combine into single string.
-
----
-
-## Issue: Nested build/build directory
-
-Cause: Running CMake inside existing build folder.
-Fix: Delete build and recreate properly.
-
+6. Error: "no input files" during compiler test
+    Cause: Flags defined as list instead of string.
+    Fix: Combine into single string.
 ---
 
 Workflow:
