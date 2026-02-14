@@ -2,14 +2,13 @@
 
 **A Reproducible CMake-Based Embedded Workflow Guide**
 
-A clean, reproducible, professional workflow for STM32 (Cortex‑M4) development on NixOS using CMake.
+A clean, reproducible, easy to use workflow for STM32 (Cortex‑M4) development on NixOS using CMake.
 
 This document contains:
 
 * Common errors encountered
 * Root causes
 * Correct fixes
-* Final stable architecture
 * Reusable template structure
 
 ---
@@ -30,11 +29,50 @@ project/
 └── build.sh
 ```
 
-# 1. Architecture Overview
+# 2. ARM Toolchain Configuration
 
-We separate the system into TWO clear layers:
+Canonical flag set for STM32F401 in /cmake/gcc-arm-none-eabi.camke:
 
-## 1.1 Development Environment (stm32-develop)
+- Need to add: `-mthumb`
+
+Rules:
+
+* Do NOT mix hard and softfp
+* Do NOT define flags multiple times
+* Keep flags as ONE string (not list)
+
+Correct example:
+
+```cmake
+set(ARM_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
+```
+
+Incorrect (causes shell splitting errors):
+
+```cmake
+set(ARM_FLAGS
+  "-mcpu=cortex-m4"
+  "-mthumb"
+)
+```
+- Remove `--specs=nano.specs` (will update the full line later)
+
+
+
+# 3. Using Templates
+
+We use 2 different templates which can be copied into the project:
+  1. [flake.nix](/Templates/stm32-develop/flake.nix)
+```bash
+cp -r ~/Template/stm32-develop/flake.nix ~/Workspace/< project name >
+``` 
+
+  2. [build.sh](/Templates/stm32-build/build.sh)
+```bash
+cp -r ~/Template/stm32-build/build.sh ~/Workspace/< project name >
+``` 
+
+## 3.1 Development Environment (stm32-develop)
 
 Controls the toolchain and build tools.
 
@@ -50,15 +88,7 @@ Provides:
 * gdb
 * openocd
 
-Usage:
-
-As we need flake for every project I made a template for it and just have to copy it to the project and use it.
-
 In project dir run:
-
-```bash
-cp -r ~/Template/stm32-develop/flake.nix ~/Workspace/< project name >
-``` 
 
 ```bash
 nix develop
@@ -76,63 +106,28 @@ It only provides the environment.
 
 ---
 
-## 2.2 Build System (stm32-build)
+## 3.2 Build System (stm32-build)
 
-Controls compilation and linking.
-
-Contains:
-
-* `cmake/gcc-arm-none-eabi.cmake`
-* Linker script
-* CMakeLists.txt
-* Optional `build.sh`
-
-Design Rules:
-
-* Single canonical ARM flag string
-* Always include `-mthumb`
-* Use ONE float ABI (hard OR softfp)
-* No duplicated flags
-* Toolchain logic isolated from project logic
-
----
-
-# 2. Stable ARM Toolchain Configuration
-
-Canonical flag set for STM32F401:
-
+The `build.sh` contains the following commands:
+```bash
+./build.sh           # Builds the project
+./build.sh clean     # Cleans the build
+./build.sh rebuild   # Cleans and builds the project
+./build.sh flash     # Flashes the .elf using openocd
+./build.sh debug     # Opens gdb
 ```
--mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-```
+*Note: Need to fix debug mode*
 
-Rules:
+- `flash` needs upadating so it works in vs code terminal but for now it works in bash.
 
-* Do NOT mix hard and softfp
-* Do NOT define flags multiple times
-* Keep flags as ONE string (not list)
+- Run the commands in the first level of the project.
 
-Correct example:
 
-```
-set(ARM_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
-```
+### What each command does
 
-Incorrect (causes shell splitting errors):
+#### First build
 
-```
-set(ARM_FLAGS
-  "-mcpu=cortex-m4"
-  "-mthumb"
-)
-```
-
----
-
-# 3. Standard Build Workflow
-
-## First Build
-
-```
+```bash
 nix develop
 mkdir build
 cd build
@@ -140,20 +135,30 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/gcc-arm-none-eabi.cmake
 cmake --build .
 ```
 
-## After Code Changes
+#### After Code Changes
 
-```
+```bash
 cmake --build build
 ```
 
-## Clean + Rebuild
+#### Clean + Rebuild
 
-```
+```bash
 rm -rf build
 mkdir build
 cd build
 cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/gcc-arm-none-eabi.cmake
 cmake --build .
+```
+
+#### flash
+```bash
+# will update
+```
+
+#### debug
+```bash
+# will update when i figure out how to make it work
 ```
 
 ---
@@ -209,46 +214,9 @@ Fix: Delete build and recreate properly.
 
 ---
 
-# 5. Nix Store Size Clarification
-
-Large `/nix/store` size is normal.
-
-Reasons:
-
-* Multiple system generations
-* Cached toolchains
-* Multiple nixpkgs revisions
-
-To clean old generations:
-
-```
-sudo nix-env --delete-generations +3 --profile /nix/var/nix/profiles/system
-sudo nix-collect-garbage -d
-```
-
-Important:
-Toolchains are stored ONCE globally.
-Multiple projects do NOT duplicate them.
-
----
-
-
-
 Workflow:
 
 1. Enter environment → `nix develop`
-2. Build → `cmake --build build`
+2. Build → `.build.sh`
 3. Rebuild only when toolchain or config changes
-
----
-
-# 7. Final Result
-
-You now have:
-
-* Reproducible development shell
-* Stable ARM toolchain configuration
-* Clean rebuild workflow
-* No global system dependency pollution
-* Template-ready STM32 infrastructure
 
